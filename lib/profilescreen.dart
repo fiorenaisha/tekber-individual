@@ -5,12 +5,10 @@ import 'package:flutter/services.dart';
 
 // =============================================================
 // 1. PALET WARNA
-//    Tone: off-white hangat + blur biru (lampiran 2),
-//    garis tebal hitam + warna pastel (lampiran 1).
 // =============================================================
 const Color kBackground = Color(0xFFFBFAF6);
-const Color kInk = Color(0xFF1C1C1E); // warna garis & teks utama
-const Color kInkSoft = Color(0xFF6B6B70); // teks sekunder
+const Color kInk = Color(0xFF1C1C1E);
+const Color kInkSoft = Color(0xFF6B6B70);
 const Color kBlue = Color(0xFF5B7FFF);
 const Color kLavender = Color(0xFFB9A7FF);
 const Color kBlueSoft = Color(0xFFD9E3FF);
@@ -18,31 +16,32 @@ const Color kPeach = Color(0xFFFFD8C8);
 const Color kMint = Color(0xFFD7EFD0);
 const Color kSun = Color(0xFFFBEFA8);
 
-const double kBorderWidth = 1.8; // ketebalan garis outline
+const double kBorderWidth = 1.8;
 
 // =============================================================
-// 2. DATA PROFIL (ganti sesuai kebutuhan)
+// 2. DATA PROFIL
 // =============================================================
-const String kName = 'Fiorena Aisha M'; // TODO: ganti dengan nama lengkap
+const String kName = 'Fiorena Aisha M';
 const String kNrp = '5026241089';
 const String kUniversity = 'Institut Teknologi Sepuluh Nopember';
 const String kMajor = 'Information Systems';
-const String kEmail = 'your.email@example.com'; // TODO: ganti email
+const String kEmail = 'fiorena070307@gmail.com';
 const String kGithub = 'github.com/fiorenaisha';
 
+// Diambil dari bagian Skills di CV.
 const List<String> kSkills = [
-  'Flutter',
-  'Dart',
+  'Java',
   'Python',
-  'Pandas',
+  'SQL',
+  'HTML/CSS',
+  'BPMN',
+  'ProcessMaker',
   'Odoo',
-  'TOGAF',
-  'Visual Paradigm',
-  'Packet Tracer',
-  'Apps Script',
+  'SAP',
+  'ESB',
+  'Power BI',
 ];
 
-// Ikon untuk tiap tombol di navigation bar (urutan = urutan section).
 const List<IconData> kNavIcons = [
   Icons.home_outlined,
   Icons.school_outlined,
@@ -52,7 +51,7 @@ const List<IconData> kNavIcons = [
 ];
 
 // =============================================================
-// 3. SCREEN UTAMA
+// 3. PROFILE SCREEN
 // =============================================================
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -63,9 +62,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ScrollController _controller = ScrollController();
-
-  // Satu GlobalKey per section, dipakai untuk scroll saat nav diketuk
-  // dan untuk mengetahui section mana yang sedang terlihat.
   final List<GlobalKey> _keys = List.generate(5, (_) => GlobalKey());
 
   int _selected = 0;
@@ -78,37 +74,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    _controller.removeListener(_onScroll);
     _controller.dispose();
     super.dispose();
   }
 
-  // Menentukan tombol nav mana yang aktif berdasarkan posisi scroll.
   void _onScroll() {
     if (!_controller.hasClients) return;
 
     int current = 0;
+
     for (int i = 0; i < _keys.length; i++) {
       final ctx = _keys[i].currentContext;
       if (ctx == null) continue;
-      final box = ctx.findRenderObject() as RenderBox;
-      final top = box.localToGlobal(Offset.zero).dy;
+
+      final object = ctx.findRenderObject();
+      if (object is! RenderBox) continue;
+
+      final top = object.localToGlobal(Offset.zero).dy;
       if (top <= 220) current = i;
     }
 
-    // Kalau sudah mentok di bawah, anggap section terakhir yang aktif.
     if (_controller.position.pixels >=
         _controller.position.maxScrollExtent - 8) {
       current = _keys.length - 1;
     }
 
-    if (current != _selected) setState(() => _selected = current);
+    if (current != _selected) {
+      setState(() => _selected = current);
+    }
   }
 
-  // Dipanggil saat tombol nav diketuk: scroll halus ke section tujuan.
   void _goTo(int index) {
     setState(() => _selected = index);
+
     final ctx = _keys[index].currentContext;
     if (ctx == null) return;
+
     Scrollable.ensureVisible(
       ctx,
       duration: const Duration(milliseconds: 500),
@@ -125,10 +127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: kBackground,
       body: Stack(
         children: [
-          // Lapisan 1: background blur biru
           const _GradientBackground(),
 
-          // Lapisan 2: konten yang bisa di-scroll
           SafeArea(
             bottom: false,
             child: SingleChildScrollView(
@@ -139,21 +139,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   KeyedSubtree(key: _keys[0], child: const _HeroSection()),
                   const SizedBox(height: 32),
-                  KeyedSubtree(
-                      key: _keys[1], child: const _EducationSection()),
+
+                  KeyedSubtree(key: _keys[1], child: const _EducationSection()),
                   const SizedBox(height: 32),
+
                   KeyedSubtree(
-                      key: _keys[2], child: const _ExperienceSection()),
+                    key: _keys[2],
+                    child: const _ExperienceSection(),
+                  ),
                   const SizedBox(height: 32),
+
                   KeyedSubtree(key: _keys[3], child: const _SkillsSection()),
                   const SizedBox(height: 32),
+
                   KeyedSubtree(key: _keys[4], child: const _ContactSection()),
                 ],
               ),
             ),
           ),
 
-          // Lapisan 3: navigation bar melayang (tidak menyentuh tepi layar)
           Positioned(
             left: 28,
             right: 28,
@@ -171,9 +175,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 // =============================================================
-// 4. BACKGROUND GRADASI BLUR
-//    Tiga lingkaran RadialGradient yang memudar ke transparan,
-//    sehingga terlihat seperti blur biru di lampiran 2.
+// 4. BACKGROUND
+//    _Blob dihilangkan dan digabung di sini.
 // =============================================================
 class _GradientBackground extends StatelessWidget {
   const _GradientBackground();
@@ -188,43 +191,53 @@ class _GradientBackground extends StatelessWidget {
             Positioned(
               top: -140,
               left: -120,
-              child: _Blob(size: 420, color: kBlue, opacity: 0.50),
+              child: SizedBox(
+                width: 420,
+                height: 420,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Color(0x805B7FFF), Color(0x005B7FFF)],
+                    ),
+                  ),
+                ),
+              ),
             ),
+
             Positioned(
               top: 380,
               right: -220,
-              child: _Blob(size: 440, color: kLavender, opacity: 0.35),
+              child: SizedBox(
+                width: 440,
+                height: 440,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Color(0x59B9A7FF), Color(0x00B9A7FF)],
+                    ),
+                  ),
+                ),
+              ),
             ),
+
             Positioned(
               bottom: -180,
               left: -120,
-              child: _Blob(size: 460, color: kBlue, opacity: 0.35),
+              child: SizedBox(
+                width: 460,
+                height: 460,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [Color(0x595B7FFF), Color(0x005B7FFF)],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Blob extends StatelessWidget {
-  const _Blob({required this.size, required this.color, required this.opacity});
-
-  final double size;
-  final Color color;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color.withValues(alpha: opacity),
-            color.withValues(alpha: 0),
           ],
         ),
       ),
@@ -233,83 +246,87 @@ class _Blob extends StatelessWidget {
 }
 
 // =============================================================
-// 5. SECTION: HERO (sapaan, kartu profil, about, overview)
+// 5. HERO SECTION
+//    _TopBar digabung di dalam _HeroSection.
 // =============================================================
 class _HeroSection extends StatelessWidget {
   const _HeroSection();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _TopBar(),
-        SizedBox(height: 24),
-        _ProfileCard(),
-        SizedBox(height: 28),
-        _SectionHeader('About Me', subtitle: 'A little about who I am'),
-        _OutlineBox(
+        // TOP BAR
+        Row(
+          children: [
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Hi, I'm $kName,",
+                    style: TextStyle(
+                      color: kInk,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Welcome to my portfolio',
+                    style: TextStyle(color: kInkSoft, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: kInk, width: kBorderWidth),
+              ),
+              child: const Icon(Icons.grid_view_rounded, color: kInk),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        const _ProfileCard(),
+
+        const SizedBox(height: 28),
+
+        const _SectionHeader('About Me', subtitle: 'A little about who I am'),
+
+        const _OutlineBox(
           child: Text(
-            'Information Systems student at ITS who enjoys turning business '
-            'processes into practical digital solutions, from mobile apps to '
-            'data analysis. Previously a teaching assistant, an intern at a '
-            'milk tea outlet, and always learning something new.',
+            'Penultimate Information Systems student with experience in '
+            'partnership, sponsorship, and business development, alongside '
+            'a strong interest in business process analysis and system '
+            'improvement. I enjoy using data and technology to create '
+            'effective solutions and meaningful impact.',
             style: TextStyle(color: kInkSoft, fontSize: 14, height: 1.6),
           ),
         ),
-        SizedBox(height: 28),
-        _SectionHeader('Overview', subtitle: 'My journey in numbers'),
-        _OverviewTiles(),
+
+        const SizedBox(height: 28),
+
+        const _SectionHeader('Overview', subtitle: 'My journey in numbers'),
+
+        const _OverviewTiles(),
       ],
     );
   }
 }
 
-// Sapaan di atas + tombol kotak outline (gaya lampiran 1).
-class _TopBar extends StatelessWidget {
-  const _TopBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Hi, I'm $kName,",
-                style: TextStyle(
-                  color: kInk,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'Welcome to my portfolio',
-                style: TextStyle(color: kInkSoft, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kInk, width: kBorderWidth),
-          ),
-          child: const Icon(Icons.grid_view_rounded, color: kInk),
-        ),
-      ],
-    );
-  }
-}
-
-// Kartu profil: foto, nama, NRP, dan info singkat (gaya header lampiran 4).
+// =============================================================
+// 6. PROFILE CARD
+// =============================================================
 class _ProfileCard extends StatelessWidget {
   const _ProfileCard();
 
@@ -322,7 +339,6 @@ class _ProfileCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Foto diri: letakkan file di assets/profile.jpg
               Container(
                 width: 80,
                 height: 80,
@@ -335,13 +351,14 @@ class _ProfileCard extends StatelessWidget {
                 child: Image.asset(
                   'assets/profile.jpg',
                   fit: BoxFit.cover,
-                  // Kalau foto belum ada, tampilkan ikon pengganti.
                   errorBuilder: (context, error, stackTrace) {
                     return const Icon(Icons.person, size: 44, color: kInk);
                   },
                 ),
               ),
+
               const SizedBox(width: 16),
+
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,7 +384,7 @@ class _ProfileCard extends StatelessWidget {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Information Systems Student',
+                      'Information Systems',
                       style: TextStyle(color: kInkSoft, fontSize: 13),
                     ),
                   ],
@@ -375,18 +392,25 @@ class _ProfileCard extends StatelessWidget {
               ),
             ],
           ),
+
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1, color: Color(0x33000000)),
           ),
+
           const Wrap(
             spacing: 16,
             runSpacing: 12,
             children: [
               _MetaItem(icon: Icons.school_outlined, text: 'ITS Surabaya'),
               _MetaItem(
-                  icon: Icons.menu_book_outlined, text: 'Penultimate IS Student'),
-              _MetaItem(icon: Icons.local_cafe_outlined, text: '2024'),
+                icon: Icons.menu_book_outlined,
+                text: '3rd year student',
+              ),
+              _MetaItem(
+                icon: Icons.location_on_outlined,
+                text: 'Surabaya, Indonesia',
+              ),
             ],
           ),
         ],
@@ -395,74 +419,22 @@ class _ProfileCard extends StatelessWidget {
   }
 }
 
-// Tiga kotak statistik berwarna (gaya "Overview" lampiran 1).
+// =============================================================
+// 7. OVERVIEW
+//    _StatTile digabung ke dalam _OverviewTiles.
+//    Angka diambil dari CV: 3 medali perak internasional,
+//    200+ siswa/mahasiswa yang diajar, 7 peran organisasi/kepanitiaan.
+// =============================================================
 class _OverviewTiles extends StatelessWidget {
   const _OverviewTiles();
 
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      height: 200,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 5,
-            child: _StatTile(
-              value: '2',
-              label: 'TA Courses',
-              color: kBlueSoft,
-              icon: Icons.menu_book_outlined,
-              big: true,
-            ),
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            flex: 4,
-            child: Column(
-              children: [
-                Expanded(
-                  child: _StatTile(
-                    value: '1',
-                    label: 'Internship',
-                    color: kSun,
-                    icon: Icons.local_cafe_outlined,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Expanded(
-                  child: _StatTile(
-                    value: '2024',
-                    label: 'Batch',
-                    color: kMint,
-                    icon: Icons.school_outlined,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.value,
-    required this.label,
-    required this.color,
-    required this.icon,
-    this.big = false,
-  });
-
-  final String value;
-  final String label;
-  final Color color;
-  final IconData icon;
-  final bool big; // true = kotak besar (ikon di atas, angka di bawah)
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStatTile({
+    required String value,
+    required String label,
+    required Color color,
+    required IconData icon,
+    bool big = false,
+  }) {
     final valueText = Text(
       value,
       style: TextStyle(
@@ -472,6 +444,7 @@ class _StatTile extends StatelessWidget {
         height: 1.1,
       ),
     );
+
     final labelText = Text(
       label,
       style: TextStyle(color: kInk, fontSize: big ? 14 : 12),
@@ -510,31 +483,85 @@ class _StatTile extends StatelessWidget {
             ),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: Row(
+        children: [
+          Expanded(
+            flex: 5,
+            child: _buildStatTile(
+              value: '6', // baris 560
+              label: 'Projects', // baris 561
+              color: kBlueSoft, // baris 562
+              icon: Icons.folder_outlined, // baris 563
+              big: true,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                Expanded(
+                  child: _buildStatTile(
+                    value: '1', // baris 576
+                    label: 'Internship', // baris 577
+                    color: kSun, // baris 578
+                    icon: Icons.work_outline_rounded, // baris 579
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                Expanded(
+                  child: _buildStatTile(
+                    value: '4', // baris 587
+                    label: 'Teaching Roles', // baris 588
+                    color: kMint, // baris 589
+                    icon: Icons.menu_book_outlined, // baris 590
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // =============================================================
-// 6. SECTION: EDUCATION
+// 8. EDUCATION SECTION
 // =============================================================
+
 class _EducationSection extends StatelessWidget {
   const _EducationSection();
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader('Education', subtitle: 'My academic journey'),
+        const _SectionHeader('Education', subtitle: 'My academic journey'),
+
         _OutlineBox(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _DashedIcon(Icons.account_balance_outlined, size: 50),
-              SizedBox(width: 14),
+              const _DashedIcon(Icons.account_balance_outlined, size: 50),
+
+              const SizedBox(width: 14),
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       kUniversity,
                       style: TextStyle(
                         color: kInk,
@@ -542,19 +569,20 @@ class _EducationSection extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text(
+
+                    const SizedBox(height: 4),
+
+                    const Text(
                       kMajor,
                       style: TextStyle(color: kInkSoft, fontSize: 13),
                     ),
-                    SizedBox(height: 12),
+
+                    const SizedBox(height: 12),
+
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: [
-                        _Tag('2024 - Present', color: kBlueSoft),
-                        _Tag('Batch 2024', color: kSun),
-                      ],
+                      children: [_tag('2024 - Present', color: kBlueSoft)],
                     ),
                   ],
                 ),
@@ -568,7 +596,8 @@ class _EducationSection extends StatelessWidget {
 }
 
 // =============================================================
-// 7. SECTION: EXPERIENCE (gaya kartu "Recently Updated" lampiran 1)
+// 9. EXPERIENCE SECTION
+//    3 pengalaman paling prestise dari CV.
 // =============================================================
 class _ExperienceSection extends StatelessWidget {
   const _ExperienceSection();
@@ -578,38 +607,48 @@ class _ExperienceSection extends StatelessWidget {
     return const Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader('Experience', subtitle: 'Work, teaching, and projects'),
-        _ExperienceCard(
-          title: 'Teaching Assistant',
-          headerColor: kBlueSoft,
-          description:
-              'Assisting students in the Business Process Management and '
-              'IT Risk Management courses.',
-          metaIcon: Icons.school_outlined,
-          metaText: 'ITS',
-          tags: ['Teaching', 'BPM', 'IT Risk'],
+        _SectionHeader(
+          'Experience',
+          subtitle: 'Work, teaching, and leadership',
         ),
-        SizedBox(height: 14),
+
         _ExperienceCard(
-          title: 'Intern at Kancha Tea Hub',
+          title: 'Business Analytics Intern',
           headerColor: kPeach,
           description:
-              'Building digital tools for staff training, such as quizzes '
-              'and a barista guideline web app for a milk tea outlet.',
+              'Built an operational dashboard from ESB ERP data and turned '
+              'its insights into training materials for Store Leaders.',
           metaIcon: Icons.local_cafe_outlined,
-          metaText: 'F&B',
-          tags: ['Internship', 'Digital tools'],
+          metaText: 'Kancha Tea Hub • Jul - Aug 2026',
+          tags: ['Internship', 'Power BI', 'ESB'],
         ),
+
         SizedBox(height: 14),
+
         _ExperienceCard(
-          title: 'Flutter Personal Profile',
+          title: 'Teaching Assistant & Grader',
+          headerColor: kBlueSoft,
+          description:
+              'Guided second-semester students in business process '
+              'automation with ProcessMaker and assessed their practical '
+              'work in the Business Process Management course.',
+          metaIcon: Icons.school_outlined,
+          metaText: 'ITS Information Systems • Feb - Jul 2026',
+          tags: ['Teaching', 'BPM', 'ProcessMaker'],
+        ),
+
+        SizedBox(height: 14),
+
+        _ExperienceCard(
+          title: 'Business Development Staff',
           headerColor: kMint,
           description:
-              'This app: a mobile portfolio built with Flutter and plain '
-              'Material widgets only.',
-          metaIcon: Icons.phone_android,
-          metaText: 'Academic',
-          tags: ['Flutter', 'In progress'],
+              'Identified partnership opportunities, managed sponsor '
+              'relationships, and supported outreach and kits for '
+              'GDGoC ITS 2025/2026.',
+          metaIcon: Icons.groups_outlined,
+          metaText: 'GDGoC ITS • Jan - Sep 2026',
+          tags: ['Partnership', 'Sponsorship'],
         ),
       ],
     );
@@ -637,7 +676,7 @@ class _ExperienceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      clipBehavior: Clip.antiAlias, // memotong header agar ikut sudut membulat
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
@@ -646,7 +685,6 @@ class _ExperienceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header berwarna dengan garis bawah
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -665,6 +703,7 @@ class _ExperienceCard extends StatelessWidget {
               ),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(18),
             child: Column(
@@ -678,13 +717,17 @@ class _ExperienceCard extends StatelessWidget {
                     height: 1.5,
                   ),
                 ),
+
                 const SizedBox(height: 14),
+
                 _MetaItem(icon: metaIcon, text: metaText),
+
                 const SizedBox(height: 14),
+
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: [for (final t in tags) _Tag(t)],
+                  children: [for (final tag in tags) _tag(tag)],
                 ),
               ],
             ),
@@ -696,7 +739,7 @@ class _ExperienceCard extends StatelessWidget {
 }
 
 // =============================================================
-// 8. SECTION: SKILLS (chip hitam seperti lampiran 4)
+// 10. SKILLS SECTION
 // =============================================================
 class _SkillsSection extends StatelessWidget {
   const _SkillsSection();
@@ -706,8 +749,11 @@ class _SkillsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionHeader('Skills & Expertise',
-            subtitle: 'Tools and topics I work with'),
+        const _SectionHeader(
+          'Skills & Expertise',
+          subtitle: 'Tools and topics I work with',
+        ),
+
         _OutlineBox(
           child: Wrap(
             spacing: 8,
@@ -715,8 +761,10 @@ class _SkillsSection extends StatelessWidget {
             children: [
               for (final skill in kSkills)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 9,
+                  ),
                   decoration: BoxDecoration(
                     color: kInk,
                     borderRadius: BorderRadius.circular(16),
@@ -739,7 +787,7 @@ class _SkillsSection extends StatelessWidget {
 }
 
 // =============================================================
-// 9. SECTION: CONTACT (ketuk baris untuk menyalin teks)
+// 11. CONTACT SECTION
 // =============================================================
 class _ContactSection extends StatelessWidget {
   const _ContactSection();
@@ -765,14 +813,20 @@ class _ContactSection extends StatelessWidget {
               letterSpacing: -0.4,
             ),
           ),
+
           SizedBox(height: 6),
+
           Text(
             'Tap a row to copy it.',
             style: TextStyle(color: Color(0xFFB8B8BE), fontSize: 13),
           ),
+
           SizedBox(height: 16),
+
           _ContactRow(icon: Icons.mail_outline_rounded, text: kEmail),
+
           SizedBox(height: 10),
+
           _ContactRow(icon: Icons.code_rounded, text: kGithub),
         ],
       ),
@@ -788,6 +842,7 @@ class _ContactRow extends StatelessWidget {
 
   void _copy(BuildContext context) {
     Clipboard.setData(ClipboardData(text: text));
+
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -821,13 +876,16 @@ class _ContactRow extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 18, color: kInk),
               ),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Text(
                   text,
                   style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ),
+
               const Icon(Icons.copy_rounded, size: 18, color: Colors.white70),
             ],
           ),
@@ -838,9 +896,7 @@ class _ContactRow extends StatelessWidget {
 }
 
 // =============================================================
-// 10. NAVIGATION BAR MELAYANG (lampiran 3)
-//     - jarak kiri/kanan/bawah lewat Positioned di atas
-//     - BackdropFilter (bawaan dart:ui) membuat efek kaca buram
+// 12. FLOATING NAVIGATION BAR
 // =============================================================
 class _FloatingNavBar extends StatelessWidget {
   const _FloatingNavBar({
@@ -894,10 +950,9 @@ class _FloatingNavBar extends StatelessWidget {
 }
 
 // =============================================================
-// 11. KOMPONEN KECIL YANG DIPAKAI BERULANG
+// 13. REUSABLE COMPONENTS
 // =============================================================
 
-// Judul section + subjudul.
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, {this.subtitle});
 
@@ -920,6 +975,7 @@ class _SectionHeader extends StatelessWidget {
               letterSpacing: -0.3,
             ),
           ),
+
           if (subtitle != null)
             Padding(
               padding: const EdgeInsets.only(top: 2),
@@ -934,7 +990,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// Kotak dengan garis outline tebal (bentuk khas lampiran 1).
 class _OutlineBox extends StatelessWidget {
   const _OutlineBox({
     required this.child,
@@ -963,35 +1018,26 @@ class _OutlineBox extends StatelessWidget {
   }
 }
 
-// Label kecil ber-outline (misalnya "Completed", "Need 5h").
-class _Tag extends StatelessWidget {
-  const _Tag(this.text, {this.color = const Color(0xFFEDEDED)});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kInk, width: 1.2),
+// _Tag diganti menjadi fungsi biasa, bukan class widget.
+Widget _tag(String text, {Color color = const Color(0xFFEDEDED)}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: kInk, width: 1.2),
+    ),
+    child: Text(
+      text,
+      style: const TextStyle(
+        color: kInk,
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: kInk,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }
 
-// Ikon + teks pendek (baris info kecil).
 class _MetaItem extends StatelessWidget {
   const _MetaItem({required this.icon, required this.text});
 
@@ -1005,16 +1051,12 @@ class _MetaItem extends StatelessWidget {
       children: [
         _DashedIcon(icon, size: 30),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: const TextStyle(color: kInkSoft, fontSize: 12),
-        ),
+        Text(text, style: const TextStyle(color: kInkSoft, fontSize: 12)),
       ],
     );
   }
 }
 
-// Ikon di dalam kotak bergaris putus-putus (khas lampiran 1).
 class _DashedIcon extends StatelessWidget {
   const _DashedIcon(this.icon, {this.size = 40});
 
@@ -1028,18 +1070,20 @@ class _DashedIcon extends StatelessWidget {
       height: size,
       child: CustomPaint(
         painter: _DashedRRectPainter(radius: size * 0.3),
-        child: Center(child: Icon(icon, size: size * 0.5, color: kInk)),
+        child: Center(
+          child: Icon(icon, size: size * 0.5, color: kInk),
+        ),
       ),
     );
   }
 }
 
-// Menggambar kotak membulat dengan garis putus-putus.
-// Caranya: ambil jalur kotak, lalu gambar potongan pendek berselang-seling.
+// CustomPainter, bukan widget.
 class _DashedRRectPainter extends CustomPainter {
   _DashedRRectPainter({required this.radius});
 
   final double radius;
+
   static const double _dash = 4;
   static const double _gap = 3;
 
@@ -1057,14 +1101,17 @@ class _DashedRRectPainter extends CustomPainter {
 
     for (final metric in path.computeMetrics()) {
       double distance = 0;
+
       while (distance < metric.length) {
         canvas.drawPath(metric.extractPath(distance, distance + _dash), paint);
+
         distance += _dash + _gap;
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DashedRRectPainter oldDelegate) =>
-      oldDelegate.radius != radius;
+  bool shouldRepaint(covariant _DashedRRectPainter oldDelegate) {
+    return oldDelegate.radius != radius;
+  }
 }
