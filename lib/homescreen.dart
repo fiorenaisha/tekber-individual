@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'menuscreen.dart';
+import 'profilescreen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -10,7 +12,7 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         title: const Text(
-          'Dashboard Utama',
+          'TEST HOME SCREEN',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
@@ -24,6 +26,8 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // HEADER DASHBOARD
+
               Container(
                 padding: const EdgeInsets.all(24.0),
                 decoration: BoxDecoration(
@@ -35,7 +39,8 @@ class HomeScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF4F46E5),
+                      color: const Color(0xFF4F46E5)
+                        .withValues(alpha: 0.25),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -67,8 +72,9 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'ini mobile dev kok susah banget ya, capek banget belajar mobile dev:)',
+                    const Text(
+                      'ini mobile dev kok susah banget ya, '
+                      'capek banget belajar mobile dev:)',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
@@ -79,7 +85,38 @@ class HomeScreen extends StatelessWidget {
                   ],
                 ),
               ),
+
               const Spacer(),
+
+              // BUTTON PERSONAL PROFILE
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF365B50),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.person_outline),
+                label: const Text(
+                  'My Personal Profile',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // BUTTON MENU HANDSON
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(
@@ -98,10 +135,11 @@ class HomeScreen extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.explore_rounded),
                 label: const Text(
-                  'Menu',
+                  'Menu Praktikum',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
+
               const SizedBox(height: 16),
             ],
           ),
